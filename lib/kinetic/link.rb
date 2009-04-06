@@ -257,7 +257,7 @@ module Kinetic
     # requires form name and hash of name,value pairs
     # TODO - return values of more than just ID
     #    def Link::create(form_name, name_values = Hash.new)
-    def Link::create(form_name, name_values = nil)
+    def Link::create(form_name, name_values = [])
 
       Link::establish_connection if @@connected == false
 
