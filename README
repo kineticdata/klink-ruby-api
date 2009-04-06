@@ -1,0 +1,6 @@
+== Klink Ruby Lib
+
+=== Testing
+The test suite requires pre-defined forms to exist on the Ars server.  These
+forms can be found in the config folder and should be imported using the Ars
+Admin tool.

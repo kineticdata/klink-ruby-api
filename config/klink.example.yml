@@ -1,0 +1,17 @@
+development:
+ user:
+ password:
+ klink_server:
+ ar_server:
+
+production:
+ user:
+ password:
+ klink_server:
+ ar_server:
+
+test:
+ user:
+ password:
+ klink_server:
+ ar_server:
