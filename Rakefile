@@ -2,23 +2,24 @@ require 'rake'
 require 'rake/gempackagetask'
 require 'rake/rdoctask'
 require 'rake/testtask'
+require 'lib/link'
 
 Rake::RDocTask.new do |rdoc|
   files =['README', 'CHANGELOG', 'ROADMAP', 'lib/**/*.rb']
   rdoc.rdoc_files.add(files)
   rdoc.main = "README"
-  rdoc.title = "Klink Api"
+  rdoc.title = "Kinetic Link Ruby API"
   rdoc.rdoc_dir = 'doc'
   rdoc.options << '--line-numbers' << '--inline-source'
 end
 
 spec = Gem::Specification.new do |s|
-  s.name = 'klink-api'
+  s.name = 'klink-ruby-api'
   s.summary = 'Ruby wrapper library for Kinetic Link.'
-  s.version = File.open('config/VERSION', 'r') {|f| f.read }
+  s.version = Kinetic::Link::VERSION
   s.has_rdoc = true
-  s.extra_rdoc_files = ['README', 'CHANGELOG', 'ROADMAP']
-  s.rdoc_options << '--line-numbers' << '--inline-source' << '--title' << "Klink Api"
+  s.extra_rdoc_files = ['README', 'CHANGELOG']
+  s.rdoc_options << '--line-numbers' << '--inline-source' << '--title' << "Kinetic Link Ruby API"
   s.author = 'John Sundberg'
   s.email = 'john.sundberg@kineticdata.com'
   s.homepage = 'http://www.kineticdata.com'

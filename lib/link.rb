@@ -4,10 +4,20 @@ require 'rexml/document'
 require 'yaml'
 include REXML
 
+
+
+
+# TODO - change to basic authentication vs URL including login info
+# 
+
+
 module Kinetic
   # Represents a Kinetic Link connection
   class Link
-    @@link_api_version = 'Kinetic Link 1.0'
+
+    VERSION='1.0'
+
+    @@link_api_version = "Kinetic Link #{VERSION}"
 
     # required connection information to connect to an ar_server via klink
     @@user = nil
@@ -19,40 +29,56 @@ module Kinetic
     # set to connected once we have all the info needed to connect
     @@connected = false
     
+    # TODO - Remove this function???
+    # Is this the right place for it to be?
+    # (Renamed - to see if anything else breaks)
     # Max 30 chars unique
     # can return less than 30 chars
     # currently only numbers
     # TODO - include alpha with case
     # currently 10^30 uniques
-    # with alpha 62^30
-    def Link::get_guid
+    # with mixed alpha 62^30
+    # possibly use sha1
+    def self.xxxget_guid
       return (rand.to_s.split('.')[1].to_s + rand.to_s.split('.')[1].to_s).slice(0,30)
     end
 
-    def Link::set_connection(user,password,klink_server,ar_server) 
+    # setup connection info
+    # Example: Demo,"","klinkserver:8081.yourcompany.com,remedy.yourcompany.com
+    # TODO -- add AR Server port??? -- how does that work with Klink?
+    def self.set_connection(user,password,klink_server,ar_server)
       @@user=user
       @@password=password
       @@klink_server=klink_server
       @@ar_server=ar_server
-      
-      # TODO - we should validate a connection before setting true
-      @@connected = true 
     end
     
-    # connect to klink and ar_server using connection information
-    # retieve the request_id of the Public group from Groups 
-    # I think everybody has access to that
-    def Link::test_connection
+    # return true false
+    # get a list of forms - if that works - all is well
+    # all servers have some sort of form available to public
+    def self.test_connection
+
+      begin
+        if(self.structures.length > 0) then
+          return true
+        else
+          return false
+        end
+      rescue
+        return false
+      end
     end
   
     # connect if possible return status of connection
-    def Link::establish_connection
-      unless @@connected
+    def self.establish_connection
+ 
+      if(@@ar_server == nil) then
+
         # TODO -- assumes it finds a file
         klink_config = YAML::load_file(
-          File.expand_path(File.join(File.dirname(__FILE__), '..', '..', '..', 'config', 'klink.yml')))
+          File.expand_path(File.join(".",'klink.yml')))
 
-        # TODO - grab this from somewhere - defaults to development
+        # TODO - grab this from somewhere
         environment = $env
         
         @@user=klink_config[environment]['user']
@@ -60,14 +86,20 @@ module Kinetic
         @@klink_server=klink_config[environment]['klink_server']
         @@ar_server=klink_config[environment]['ar_server']
 
-        # TODO - we should validate a connection before setting true
-        @@connected = true
       end
+
+      # Temp set to true
+      @@connected = true
+
+      # Set to actual
+      @@connected = self.test_connection
+
+
       return true
     end
     
     # delete record with id from the form
-    def Link::delete(form_name, request_id)
+    def self.delete(form_name, request_id)
 
       Link::establish_connection if @@connected == false
       
@@ -107,7 +139,7 @@ module Kinetic
     # - sort order
     # - field id(s) -- which will be field names
     # - etc -- from Klink list of options
-    def Link::entry(form_name, request_id)
+    def self.entry(form_name, request_id)
 
       Link::establish_connection if @@connected == false
       
@@ -136,9 +168,9 @@ module Kinetic
     # - sort order
     # - field id(s) -- which will be field names
     # - etc -- from Klink list of options
-    def Link::entries(form_name, params = {}, sort = nil)
+    def self.entries(form_name, params = {}, sort = nil)
 
-      Link::establish_connection if @@connected == false
+      self.establish_connection if @@connected == false
 
       if (params.size > 0) then 
         param_list = URI.escape("?qualification=#{params}")
@@ -166,12 +198,12 @@ module Kinetic
     
     # return a list of statistics
     # TODO - need to take params 
-    def Link::statistics(items = {})
+    def self.statistics(items = {})
 
-      Link::establish_connection if @@connected == false
+      self.establish_connection if @@connected == false
 
       if (items.size > 0) then 
-        param_list = URI.escape("?items=#{params}")
+        param_list = URI.escape("?items=#{items}")
       end
     
       uri = "http://#{@@klink_server}/klink/statistics/#{@@user}:#{@@password}@#{@@ar_server}#{param_list}"
@@ -191,9 +223,9 @@ module Kinetic
     
     # return a list of configurations
     # TODO - need to take params 
-    def Link::configurations(items = {})
+    def self.configurations(items = {})
 
-      Link::establish_connection if @@connected == false
+      self.establish_connection if @@connected == false
 
       if (items.size > 0) then 
         param_list = URI.escape("?items=#{params}")
@@ -216,9 +248,9 @@ module Kinetic
     end
 
     # return a list of structures
-    def Link::structures
+    def self.structures
 
-      Link::establish_connection if @@connected == false
+      self.establish_connection if @@connected == false
 
       uri = "http://#{@@klink_server}/klink/structures/#{@@user}:#{@@password}@#{@@ar_server}"
       uri = URI.escape(uri)
@@ -238,7 +270,7 @@ module Kinetic
 
     # TODO - make cleaner and make into a library
     # I just never found it in a library
-    def Link::clean_input(v)
+    def self.clean_input(v)
 
       new_v = v.is_a?(String) ? v.clone : v
       
@@ -255,53 +287,11 @@ module Kinetic
     end
 
 
-    # TODO Refactor create and update
-    # create an entry
-    # requires form name and hash of name,value pairs
-    # TODO - return values of more than just ID
-    #    def Link::create(form_name, name_values = Hash.new)
-    def Link::create(form_name, name_values = nil)
 
-      Link::establish_connection if @@connected == false
 
-      http = Link::build_connection
+    def self.structure(form_name)
 
-      headers = {
-        'Content-Type' => 'application/xml',
-        'User-Agent' => @@link_api_version
-      }
-        
-      
-      data = "<Entry Structure=\"#{form_name}\">"
-      
-      name_values.each do |n,v|
-        if v != nil then
-          new_v = Link::clean_input(v)
-          data += "<EntryItem ID=\"#{n}\">#{new_v}</EntryItem>"
-        end
-      end
-      
-      data += "</Entry>"
-        
-      response, data = http.post("/klink/create/#{@@user}:#{@@password}@#{@@ar_server}", data, headers)
-
-      xmldoc = Document.new data
-
-      ret_val = ''
-      
-      xmldoc.elements.each('Response/Result/Entry') { |entry|
-        ret_val = entry.attributes['ID'] ||=''
-      }
-
-      raise xmldoc.to_s if ret_val == ''
-
-      return ret_val
-
-    end
-
-    def Link::structure(form_name)
-
-      Link::establish_connection if @@connected == false
+      self.establish_connection if @@connected == false
       
       uri = "http://#{@@klink_server}/klink/structure/#{@@user}:#{@@password}@#{@@ar_server}/#{form_name}"
       uri = URI.escape(uri)
@@ -319,7 +309,7 @@ module Kinetic
       
     end
 
-    def Link::build_connection
+    def self.build_connection
 
       # if port info is included - need to breakup and attach to that port
       if /:/.match(@@klink_server) then
@@ -332,44 +322,75 @@ module Kinetic
     end
 
 
-    def Link::update(form_name, record_id, name_values = nil)
 
-      Link::establish_connection if @@connected == false
+    # TODO - return values of more than just ID
+    def self.write(form_name, record_id, name_values = nil)
 
-      http = Link::build_connection
+      self.establish_connection if @@connected == false
+
+      http = self.build_connection
 
       headers = {
         'Content-Type' => 'application/xml',
         'User-Agent' => @@link_api_version
       }
-    
-      data = "<Entry ID=\"#{record_id}\" Structure=\"#{form_name}\">"
-  
+
+      data = ""
+
+      if record_id.nil? then
+        # create
+        data = %|<Entry Structure="#{form_name}">|
+      else
+        # update
+        data = %|<Entry ID="#{record_id}" Structure="#{form_name}">|
+      end
+
       name_values.each do |n,v|
-        if v != nil then    
-          new_v = Link::clean_input(v) 
-          data += "<EntryItem ID=\"#{n}\">#{new_v}</EntryItem>"
+        if v != nil then
+          new_v = Link::clean_input(v)
+          data += %|<EntryItem ID="#{n}">#{new_v}</EntryItem>|
         end
       end
-  
+
       data += "</Entry>"
-    
-      response, data = http.post("/klink/update/#{@@user}:#{@@password}@#{@@ar_server}", data, headers)
+
+      if record_id.nil? then
+        response, data = http.post("/klink/create/#{@@user}:#{@@password}@#{@@ar_server}", data, headers)
+      else
+        response, data = http.post("/klink/update/#{@@user}:#{@@password}@#{@@ar_server}", data, headers)
+      end
 
       xmldoc = Document.new data
       ret_val = ""
 
-      xmldoc.elements.each('Response/Result/Entry') { |entry| 
+      xmldoc.elements.each('Response/Result/Entry') { |entry|
         ret_val = entry.attributes['ID'] ||=''
       }
 
-      # TODO figure out why there was a raise here
-      # The RESET_SORT filter did not seem to need to return data
-      #raise xmldoc.to_s if ret_val == ''
-  
+      raise xmldoc.to_s if ret_val == ''
+
       return ret_val
 
     end
+
+
+
+    def self.create(form_name, name_values = nil)
+
+      self.write(form_name, nil, name_values)
+
+    end
+
+
+    def self.update(form_name, record_id, name_values = nil)
+
+      self.write(form_name, record_id, name_values)
+
+    end
+
+
+    
+
 
   end
 
