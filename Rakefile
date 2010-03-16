@@ -2,7 +2,7 @@ require 'rake'
 require 'rake/gempackagetask'
 require 'rake/rdoctask'
 require 'rake/testtask'
-require 'lib/link'
+require 'lib/kinetic/link'
 
 Rake::RDocTask.new do |rdoc|
   files =['README', 'CHANGELOG', 'ROADMAP', 'lib/**/*.rb']

@@ -1,3 +1,6 @@
 require 'test/unit'
-require File.dirname(__FILE__) + '/../lib/link'
+require 'lib/kinetic/link'
 
+
+# tells klink.yml what to load for environment
+$klink_env = "test"

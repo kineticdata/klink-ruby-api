@@ -5,19 +5,13 @@ require 'yaml'
 include REXML
 
 
-
-
-# TODO - change to basic authentication vs URL including login info
-# 
-
-
 module Kinetic
   # Represents a Kinetic Link connection
   class Link
 
-    VERSION='1.0'
+    Kinetic::Link::VERSION='1.0.1'
 
-    @@link_api_version = "Kinetic Link #{VERSION}"
+    @@link_api_version = "Kinetic Link #{Kinetic::Link::VERSION}"
 
     # required connection information to connect to an ar_server via klink
     @@user = nil
@@ -71,20 +65,27 @@ module Kinetic
   
     # connect if possible return status of connection
     def self.establish_connection
- 
+
       if(@@ar_server == nil) then
 
-        # TODO -- assumes it finds a file
+        # TODO - grab this from somewhere
+        environment = $klink_env
+
+        raise "No environment set" if(environment == nil)
+
+        # TODO - assumes it finds a file
         klink_config = YAML::load_file(
           File.expand_path(File.join(".",'klink.yml')))
 
-        # TODO - grab this from somewhere
-        environment = $env
-        
-        @@user=klink_config[environment]['user']
-        @@password=klink_config[environment]['password']
-        @@klink_server=klink_config[environment]['klink_server']
-        @@ar_server=klink_config[environment]['ar_server']
+        begin
+          @@user=klink_config[environment]['user']
+          @@password=klink_config[environment]['password']
+          @@klink_server=klink_config[environment]['klink_server']
+          @@ar_server=klink_config[environment]['ar_server']
+        rescue
+          raise "Problem reading environment: #{$klink_env}"
+        end
+
 
       end
 
@@ -131,8 +132,6 @@ module Kinetic
       return ret_val
 
     end
-
-
     
     # return id(s) of records from the form
     # need to take params 
@@ -162,7 +161,10 @@ module Kinetic
 
     end    
     
-    
+    # TODO - add ability to specify fields to retrieve
+    # improves performance
+    # Possibly new method entries_with_fields???
+    # TODO - same with entry_with_fields
     # return id(s) of records from the form
     # need to take params 
     # - sort order
@@ -286,9 +288,10 @@ module Kinetic
 
     end
 
-
-
-
+    # TODO - structure needs to return more than field id / field names
+    # Would be good to return structure.type
+    # also - per field -- field info
+    # 
     def self.structure(form_name)
 
       self.establish_connection if @@connected == false
@@ -316,12 +319,10 @@ module Kinetic
         (location,port) = @@klink_server.split ':'
         http = Net::HTTP.new location, port
       else
-        http = Net::HTTP.new location
+        http = Net::HTTP.new @@klink_server
       end
 
     end
-
-
 
     # TODO - return values of more than just ID
     def self.write(form_name, record_id, name_values = nil)
@@ -363,34 +364,54 @@ module Kinetic
       xmldoc = Document.new data
       ret_val = ""
 
-      xmldoc.elements.each('Response/Result/Entry') { |entry|
-        ret_val = entry.attributes['ID'] ||=''
+
+      # This is a create - return ID number
+      if record_id.nil? then
+        xmldoc.elements.each('Response/Result/Entry') { |entry|
+          ret_val = entry.attributes['ID'] ||=''
+        }
+
+        raise xmldoc.to_s if ret_val == ''
+        return ret_val
+      end
+
+      # Fall through to update -- were we successful in the actual update?
+      xmldoc.elements.each('Response') { |entry_item|
+        ret_val = entry_item.attributes['Success']
+        # TODO - this will not happen as Klink has a bug in updates
+        # See Redmine#1179
+        if ret_val == 'false' then
+          raise xmldoc.to_s
+        end
+
+        if ret_val == 'true' then
+
+          # Catch bug #1179 -- look for ERROR in message type - if so -- raise an issue
+          xmldoc.elements.each('Response/Messages/Message') {|error_item|
+            if error_item.attributes['Type'] == 'ERROR' then
+              raise xmldoc.to_s
+            end
+          }
+
+  
+        end
+
+   
       }
 
-      raise xmldoc.to_s if ret_val == ''
-
-      return ret_val
+   
+      return true
 
     end
-
-
 
     def self.create(form_name, name_values = nil)
-
       self.write(form_name, nil, name_values)
-
     end
-
 
     def self.update(form_name, record_id, name_values = nil)
-
-      self.write(form_name, record_id, name_values)
-
-    end
-
-
-    
-
+      x = self.write(form_name, record_id, name_values)
+      return x
+    end    
 
   end
 

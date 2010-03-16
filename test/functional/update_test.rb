@@ -6,23 +6,22 @@ class KineticLink_UpdateTest < Test::Unit::TestCase
     fields = {'2' => "Klink", '4' => "Shayne", '8' => "Test entry - No time"}
     record = Kinetic::Link.create("KLINK_CanonicalForm", fields)
     updated_fields = {'8' => "Test entry - #{Time.now}"}
-    updated_record = nil
+    success = nil
     assert_nothing_thrown {
-      updated_record =  Kinetic::Link.update("KLINK_CanonicalForm", record, updated_fields)
+      success =  Kinetic::Link.update("KLINK_CanonicalForm", record, updated_fields)
     }
-  rescue RuntimeError
-    assert_not_nil(updated_record)
-    assert_match(/^\d+$/,updated_record)
+
+    assert_equal(true,success)
   end
 
   def test_update_record_does_not_exist
     fields = {'8' => "Test entry - #{Time.now}"}
-    record = nil
+    success = nil
     assert_throws (:runtime_error) {
-      record =  Kinetic::Link.update("KLINK_CanonicalForm", "DOES NOT EXIST", fields)
+      success =  Kinetic::Link.update("KLINK_CanonicalForm", "DOES NOT EXIST", fields)
     }
   rescue RuntimeError
-    assert_nil(record)
+ 
   end
 
 
@@ -33,7 +32,7 @@ class KineticLink_UpdateTest < Test::Unit::TestCase
     updated_fields = {'2' => "Test"}
     updated_record = nil
     assert_throws (:runtime_error) {
-      updated_record =  Kinetic::Link.update("KLINK_Test", record, updated_fields)
+      updated_record =  Kinetic::Link.update("KLINK_CanonicalForm", record, updated_fields)
     }
   rescue RuntimeError
     assert_nil(updated_record)

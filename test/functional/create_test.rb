@@ -14,7 +14,7 @@ class KineticLink_CreateTest < Test::Unit::TestCase
 
   def test_create_with_missing_required
     #Missing a required field, 8 is required.
-    fields = {'2' => 'Tester', '4' => 'Shayne'}
+    fields = {'2' => 'Tester', '4' => 'Shayne','8' => ''}
     record = nil
     assert_throws (:runtime_error) {
       record =  Kinetic::Link.create("KLINK_CanonicalForm", fields)

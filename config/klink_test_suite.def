@@ -1505,3 +1505,22 @@ begin filter
       message-text: Warning Message
    }
 end
+begin filter
+   name           : KLINK_CanonicalForm_no_can_delete
+   timestamp      : 1268774110
+   owner          : Demo
+   last-changed   : Demo
+   filter-op      : 8
+   enable         : 1
+   filter-order   : 500
+   wk-conn-type   : 1
+   schema-name    : KLINK_CanonicalForm
+   export-version : 9
+   filter-query   : 4\1\99\8\2\4\13\No can delete\
+   action {
+      message-type: 2
+      message-num : 10000
+      message-text: Deletion prevented
+   }
+end
+
