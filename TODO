@@ -1,21 +1,13 @@
 TODO
 ====
 
-Remove dependency on $env
-
-Namespace the gem
-
 Take config file param Ex: -c "klink.yml"
-
-Tests
 
 Installation guide
 
 Documentation
 
 rdoc comments
-
-Remove matrix.kineticdata.com from test_helper.rb
 
 Change to basic authentication vs URL
 
