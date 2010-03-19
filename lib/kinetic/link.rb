@@ -230,7 +230,7 @@ module Kinetic
       self.establish_connection if @@connected == false
 
       if (items.size > 0) then 
-        param_list = URI.escape("?items=#{params}")
+        param_list = URI.escape("?items=#{items}")
       end
     
       uri = "http://#{@@klink_server}/klink/configurations/#{@@user}:#{@@password}@#{@@ar_server}#{param_list}"
