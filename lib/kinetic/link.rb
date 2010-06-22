@@ -9,7 +9,7 @@ module Kinetic
   # Represents a Kinetic Link connection
   class Link
 
-    Kinetic::Link::VERSION='1.0.2'
+    Kinetic::Link::VERSION='1.0.3'
 
     @@link_api_version = "Kinetic Link #{Kinetic::Link::VERSION}"
 
