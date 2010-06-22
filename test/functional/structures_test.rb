@@ -17,22 +17,7 @@ class StructuresTest < Test::Unit::TestCase
 
   end
 
-    def test_get_structure
-
-    struc_name = "User"
-
-    assert_nothing_thrown {
-      struc_info = Kinetic::Link.structure(struc_name)
-
-      assert_not_nil struc_info
-      assert_kind_of Hash,struc_info
-
-    }
-
-
-  end
-
-
+ 
 
 end
 

@@ -288,10 +288,7 @@ module Kinetic
 
     end
 
-    # TODO - structure needs to return more than field id / field names
-    # Would be good to return structure.type
-    # also - per field -- field info
-    # 
+ 
     def self.structure(form_name)
 
       self.establish_connection if @@connected == false
@@ -304,7 +301,44 @@ module Kinetic
 
       xmldoc = Document.new response
       xmldoc.elements.each('Response/Result/Structure/StructureItem') { |structure_item| 
-        structure_map[structure_item.attributes['ID']] = structure_item.attributes['Name']
+
+        #        structure_map[structure_item.attributes['ID']] = structure_item.attributes['Name']
+
+        name = structure_item.attributes['Name']
+        id = structure_item.attributes['ID']
+        type = structure_item.attributes['Type']  # DATA/ATTACHMENT
+
+
+        field_hash = Hash.new
+
+        field_hash["Name"] = name
+        field_hash["ID"] = id
+        field_hash["Type"] = type
+
+        structure_item.elements.each('DataType') { |value|
+          field_hash["DataType"] = value.text
+        }
+
+        structure_item.elements.each('DefaultValue') { |value|
+          field_hash["DefaultValue"] = value.text
+        }
+
+        structure_item.elements.each('EntryMode') { |value|
+          field_hash["EntryMode"] = value.text
+        }
+
+        attr = Array.new
+        structure_item.elements.each('Attributes/Attribute') { |value|
+
+          attr << value.text
+        }
+        field_hash["attributes"] = attr
+
+
+        # TODO - store it by name and by id -- easier to find
+        #structure_map[name] = field_hash
+        structure_map[id] = field_hash
+
       }
 
 

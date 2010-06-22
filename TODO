@@ -11,3 +11,6 @@ rdoc comments
 
 Change to basic authentication vs URL
 
+If connecting to a non-Klink server -- give a better error message
+-- maybe have test_connection do a good checkout and return a
+-- meaningful message
