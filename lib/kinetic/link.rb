@@ -9,7 +9,7 @@ module Kinetic
   # Represents a Kinetic Link connection
   class Link
 
-    Kinetic::Link::VERSION='1.0.3'
+    Kinetic::Link::VERSION = '1.0.4'
 
     @@link_api_version = "Kinetic Link #{Kinetic::Link::VERSION}"
 
@@ -41,25 +41,35 @@ module Kinetic
     # Example: Demo,"","klinkserver:8081.yourcompany.com,remedy.yourcompany.com
     # TODO -- add AR Server port??? -- how does that work with Klink?
     def self.set_connection(user,password,klink_server,ar_server)
-      @@user=user
-      @@password=password
-      @@klink_server=klink_server
-      @@ar_server=ar_server
+      @@user = user
+      @@password = password
+      @@klink_server = klink_server
+      @@ar_server = ar_server
     end
     
-    # return true false
+    # return true false, if false also return a message of how it failed
     # get a list of forms - if that works - all is well
     # all servers have some sort of form available to public
     def self.test_connection
-
+      # This block tests the connection to the klink server alone
+      begin
+        html = Net::HTTP.get(URI.parse("http://#{@@klink_server}/klink/about"))
+        raise unless html =~ /<a href="http:\/\/www\.kineticdata\.com">/
+      rescue
+        return false, %`Could not connect to the specified Kinetic Link server "#{@@klink_server}"`
+      end
+      # This block tests the connection to the klink server and the remedy server
+      # by attempting to retrieve data from the remedy server through klink
       begin
         if(self.structures.length > 0) then
           return true
         else
-          return false
+          return false, %`Could not find any forms on server "#{@@ar_server}"`
         end
+      rescue Timeout::Error
+        return false, %`Timeout occured when attempting to retrieve data from server "#{@@ar_server}"`
       rescue
-        return false
+        return false, %`Exception raised when attempting to retrieve data from server "#{@@ar_server}"`
       end
     end
   
@@ -138,13 +148,14 @@ module Kinetic
     # - sort order
     # - field id(s) -- which will be field names
     # - etc -- from Klink list of options
-    def self.entry(form_name, request_id)
+    def self.entry(form_name, request_id, fields = nil)
 
       Link::establish_connection if @@connected == false
       
       form_name_escaped = URI.escape(form_name)
     
       uri = "http://#{@@klink_server}/klink/entry/#{@@user}:#{@@password}@#{@@ar_server}/#{form_name_escaped}/#{request_id}"
+      uri << "?items=#{fields}" unless fields.nil?
 
       response = Net::HTTP.get URI.parse(uri)
 
