@@ -146,7 +146,12 @@ module Kinetic
     def self.entry(form_name, request_id, fields = nil)
       self.establish_connection if @@connected == false
 
-      field_list = "?items=#{fields}" unless fields.nil?
+      # build up the string of field ids to return
+      fields ||= ''
+      fields = fields.join(",") if fields.is_a? Array
+      fields.gsub!(' ', '')
+      field_list = "?items=#{fields}" unless fields.nil? || fields.empty?
+      
       uri = URI.escape("http://#{@@klink_server}/klink/entry/#{@@user}:#{@@password}@#{@@ar_server}/#{form_name}/#{request_id}#{field_list}")
 
       response = Net::HTTP.get(URI.parse(uri))
@@ -177,7 +182,12 @@ module Kinetic
 
       qual ||= ''
       qualification = "?qualification=#{qual}"
-      sort_list = "&sort=#{sort}" unless sort.nil? 
+      
+      sort ||= ''
+      sort = options.join(",") if sort.is_a? Array
+      sort.gsub!(' ', '')
+      sort_list = "&sort=#{sort}" unless sort.nil? || sort.empty?
+      
       uri = URI.escape("http://#{@@klink_server}/klink/entries/#{@@user}:#{@@password}@#{@@ar_server}/#{form_name}#{qualification}#{sort_list}")
 
       response = Net::HTTP.get(URI.parse(uri))
@@ -214,30 +224,45 @@ module Kinetic
       # build up the string of sort fields
       sort = options[:sort] || ''
       sort = options.join(",") if sort.is_a? Array
+      sort.gsub!(' ', '')
       sort_list = "&sort=#{sort}" unless sort.nil? || sort.empty?
       
       # build up the string of field ids to return
       fields = options[:fields] || ''
       fields = fields.join(",") if fields.is_a? Array
+      fields.gsub!(' ', '')
       field_list = "&items=#{fields}" unless fields.nil? || fields.empty?
       
       uri = URI.escape("http://#{@@klink_server}/klink/entries/#{@@user}:#{@@password}@#{@@ar_server}/#{form_name}#{qualification}#{sort_list}#{field_list}")
 
-      response = Net::HTTP.get(URI.parse(uri))
-      xmldoc = Document.new(response)
-
       ret_val = Array.new
+      
+      # try to get the results
+      begin
+        response = Net::HTTP.get(URI.parse(uri))
+        xmldoc = Document.new(response)
+        
+        # check if there are any errors retrieving dialry fields or character fields that are too long
+        if xmldoc.root.attributes['Success'] == "false"
+          message = xmldoc.elements["Response/Messages/Message[@MessageNumber='241']"]
+          raise StandardError.new(message.text) if message
+        end
 
-      xmldoc.elements.each('Response/Result/EntryList/Entry') { |id| 
-        entry = { '1' => id.attributes['ID'] }
-        id.elements.each('EntryItem') { |item_id|
-          entry[item_id.attributes['ID']] = item_id.text || ''
+        xmldoc.elements.each('Response/Result/EntryList/Entry') { |id| 
+          entry = { '1' => id.attributes['ID'] }
+          id.elements.each('EntryItem') { |item_id|
+            entry[item_id.attributes['ID']] = item_id.text || ''
+          }
+          ret_val << entry
         }
-        ret_val << entry
-      }
+      rescue StandardError => e
+        # if there was a problem, try to get a list of ids, then retrieve each record individually
+        self.entries(form_name, qual, sort).each { |entry_id|
+          ret_val << self.entry(form_name, entry_id, fields)
+        }
+      end
 
       return ret_val
-
     end
 
     # return a list of statistics
