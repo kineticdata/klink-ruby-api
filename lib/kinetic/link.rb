@@ -172,12 +172,13 @@ module Kinetic
     # - sort order
     # - field id(s) -- which will be field names
     # - etc -- from Klink list of options
-    def self.entries(form_name, params = {}, sort = nil)
+    def self.entries(form_name, qual = nil, sort = nil)
       self.establish_connection if @@connected == false
 
-      param_list = "?qualification=#{params}" if params.size > 0
+      qual ||= ''
+      qualification = "?qualification=#{qual}"
       sort_list = "&sort=#{sort}" unless sort.nil? 
-      uri = URI.escape("http://#{@@klink_server}/klink/entries/#{@@user}:#{@@password}@#{@@ar_server}/#{form_name}#{param_list}#{sort_list}")
+      uri = URI.escape("http://#{@@klink_server}/klink/entries/#{@@user}:#{@@password}@#{@@ar_server}/#{form_name}#{qualification}#{sort_list}")
 
       response = Net::HTTP.get(URI.parse(uri))
       xmldoc = Document.new(response)
@@ -192,6 +193,53 @@ module Kinetic
 
     end
     
+    # method: entries_with_fields
+    # parameter form_name The name of the form to query
+    # parameter options A hash of options to use with the query
+    # Available options:
+    #     :qual The qualification string used to limit results
+    #     :sort A comma separated string of field ids, or an array of field id strings used to sort the results
+    #     :fields A comma separated string of field ids, or an array of field id strings of the fields that should be returned with the results.  Field '1' is always returned,
+    #               so this field does not need to be included.
+    #
+    # returns An array of hashses.  Each entry is a hash of field ids to field values
+    #
+    def self.entries_with_fields(form_name, options = {})
+      self.establish_connection if @@connected == false
+      
+      # build up the qualification as the first parameter - not necessary as the first, but we need to include the ? somewhere.
+      qual = options[:qual] || ''
+      qualification = "?qualification=#{qual}"
+      
+      # build up the string of sort fields
+      sort = options[:sort] || ''
+      sort = options.join(",") if sort.is_a? Array
+      sort_list = "&sort=#{sort}" unless sort.nil? || sort.empty?
+      
+      # build up the string of field ids to return
+      fields = options[:fields] || ''
+      fields = fields.join(",") if fields.is_a? Array
+      field_list = "&items=#{fields}" unless fields.nil? || fields.empty?
+      
+      uri = URI.escape("http://#{@@klink_server}/klink/entries/#{@@user}:#{@@password}@#{@@ar_server}/#{form_name}#{qualification}#{sort_list}#{field_list}")
+
+      response = Net::HTTP.get(URI.parse(uri))
+      xmldoc = Document.new(response)
+
+      ret_val = Array.new
+
+      xmldoc.elements.each('Response/Result/EntryList/Entry') { |id| 
+        entry = { '1' => id.attributes['ID'] }
+        id.elements.each('EntryItem') { |item_id|
+          entry[item_id.attributes['ID']] = item_id.text || ''
+        }
+        ret_val << entry
+      }
+
+      return ret_val
+
+    end
+
     # return a list of statistics
     # TODO - need to take params 
     def self.statistics(items = {})
