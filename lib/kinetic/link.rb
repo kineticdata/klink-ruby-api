@@ -9,7 +9,7 @@ module Kinetic
   # Represents a Kinetic Link connection
   class Link
 
-    Kinetic::Link::VERSION = '1.0.4'
+    Kinetic::Link::VERSION = '1.0.5'
 
     @@link_api_version = "Kinetic Link #{Kinetic::Link::VERSION}"
 
@@ -75,7 +75,6 @@ module Kinetic
   
     # connect if possible return status of connection
     def self.establish_connection
-
       if(@@ar_server == nil) then
 
         # TODO - grab this from somewhere
@@ -111,15 +110,11 @@ module Kinetic
     
     # delete record with id from the form
     def self.delete(form_name, request_id)
-
-      Link::establish_connection if @@connected == false
+      self.establish_connection if @@connected == false
       
-      form_name_escaped = URI.escape(form_name)
-  
-      uri = "http://#{@@klink_server}/klink/delete/#{@@user}:#{@@password}@#{@@ar_server}/#{form_name_escaped}/#{request_id}"
+      uri = URI.escape("http://#{@@klink_server}/klink/delete/#{@@user}:#{@@password}@#{@@ar_server}/#{form_name}/#{request_id}")
 
-      response = Net::HTTP.get URI.parse(uri)
-
+      response = Net::HTTP.get(URI.parse(uri))
       xmldoc = Document.new response
 
       ret_val = nil
@@ -149,17 +144,13 @@ module Kinetic
     # - field id(s) -- which will be field names
     # - etc -- from Klink list of options
     def self.entry(form_name, request_id, fields = nil)
+      self.establish_connection if @@connected == false
 
-      Link::establish_connection if @@connected == false
-      
-      form_name_escaped = URI.escape(form_name)
-    
-      uri = "http://#{@@klink_server}/klink/entry/#{@@user}:#{@@password}@#{@@ar_server}/#{form_name_escaped}/#{request_id}"
-      uri << "?items=#{fields}" unless fields.nil?
+      field_list = "?items=#{fields}" unless fields.nil?
+      uri = URI.escape("http://#{@@klink_server}/klink/entry/#{@@user}:#{@@password}@#{@@ar_server}/#{form_name}/#{request_id}#{field_list}")
 
-      response = Net::HTTP.get URI.parse(uri)
-
-      xmldoc = Document.new response
+      response = Net::HTTP.get(URI.parse(uri))
+      xmldoc = Document.new(response)
 
       ret_val = Hash.new
 
@@ -182,22 +173,14 @@ module Kinetic
     # - field id(s) -- which will be field names
     # - etc -- from Klink list of options
     def self.entries(form_name, params = {}, sort = nil)
-
       self.establish_connection if @@connected == false
 
-      if (params.size > 0) then 
-        param_list = URI.escape("?qualification=#{params}")
-      end
-      
-      form_name_escaped = URI.escape(form_name)
-    
-      uri = "http://#{@@klink_server}/klink/entries/#{@@user}:#{@@password}@#{@@ar_server}/#{form_name_escaped}#{param_list}"
+      param_list = "?qualification=#{params}" if params.size > 0
+      sort_list = "&sort=#{sort}" unless sort.nil? 
+      uri = URI.escape("http://#{@@klink_server}/klink/entries/#{@@user}:#{@@password}@#{@@ar_server}/#{form_name}#{param_list}#{sort_list}")
 
-      uri << "&sort=#{sort}" unless sort.nil? 
-
-      response = Net::HTTP.get URI.parse(uri)
-
-      xmldoc = Document.new response
+      response = Net::HTTP.get(URI.parse(uri))
+      xmldoc = Document.new(response)
 
       ret_val = Array.new
 
@@ -212,17 +195,13 @@ module Kinetic
     # return a list of statistics
     # TODO - need to take params 
     def self.statistics(items = {})
-
       self.establish_connection if @@connected == false
 
-      if (items.size > 0) then 
-        param_list = URI.escape("?items=#{items}")
-      end
-    
-      uri = "http://#{@@klink_server}/klink/statistics/#{@@user}:#{@@password}@#{@@ar_server}#{param_list}"
-      response = Net::HTTP.get URI.parse(uri)
-
-      xmldoc = Document.new response
+      param_list = "?items=#{items}" if items.size > 0
+      uri = URI.escape("http://#{@@klink_server}/klink/statistics/#{@@user}:#{@@password}@#{@@ar_server}#{param_list}")
+      
+      response = Net::HTTP.get(URI.parse(uri))
+      xmldoc = Document.new(response)
 
       ret_val = Hash.new
 
@@ -237,18 +216,13 @@ module Kinetic
     # return a list of configurations
     # TODO - need to take params 
     def self.configurations(items = {})
-
       self.establish_connection if @@connected == false
 
-      if (items.size > 0) then 
-        param_list = URI.escape("?items=#{items}")
-      end
-    
-      uri = "http://#{@@klink_server}/klink/configurations/#{@@user}:#{@@password}@#{@@ar_server}#{param_list}"
-      uri = URI.escape(uri)
-      response = Net::HTTP.get URI.parse(uri)
+      param_list = "?items=#{items}" if items.size > 0
+      uri = URI.escape("http://#{@@klink_server}/klink/configurations/#{@@user}:#{@@password}@#{@@ar_server}#{param_list}")
 
-      xmldoc = Document.new response
+      response = Net::HTTP.get(URI.parse(uri))
+      xmldoc = Document.new(response)
 
       ret_val = Hash.new
 
@@ -262,14 +236,12 @@ module Kinetic
 
     # return a list of structures
     def self.structures
-
       self.establish_connection if @@connected == false
 
-      uri = "http://#{@@klink_server}/klink/structures/#{@@user}:#{@@password}@#{@@ar_server}"
-      uri = URI.escape(uri)
-      response = Net::HTTP.get URI.parse(uri)
+      uri = URI.escape("http://#{@@klink_server}/klink/structures/#{@@user}:#{@@password}@#{@@ar_server}")
 
-      xmldoc = Document.new response
+      response = Net::HTTP.get(URI.parse(uri))
+      xmldoc = Document.new(response)
 
       ret_val = Array.new
 
@@ -301,18 +273,16 @@ module Kinetic
 
  
     def self.structure(form_name)
-
       self.establish_connection if @@connected == false
       
-      uri = "http://#{@@klink_server}/klink/structure/#{@@user}:#{@@password}@#{@@ar_server}/#{form_name}"
-      uri = URI.escape(uri)
-      response = Net::HTTP.get URI.parse(uri)
-      
+      uri = URI.escape("http://#{@@klink_server}/klink/structure/#{@@user}:#{@@password}@#{@@ar_server}/#{form_name}")
+
+      response = Net::HTTP.get(URI.parse(uri))
+      xmldoc = Document.new(response)
+
       structure_map = Hash.new
-
-      xmldoc = Document.new response
-      xmldoc.elements.each('Response/Result/Structure/StructureItem') { |structure_item| 
-
+      xmldoc.elements.each('Response/Result/Structure/StructureItem') { |structure_item|
+      
         #        structure_map[structure_item.attributes['ID']] = structure_item.attributes['Name']
 
         name = structure_item.attributes['Name']
@@ -351,10 +321,7 @@ module Kinetic
         structure_map[id] = field_hash
 
       }
-
-
       return structure_map
-      
     end
 
     def self.build_connection
@@ -401,9 +368,9 @@ module Kinetic
       data += "</Entry>"
 
       if record_id.nil? then
-        response, data = http.post("/klink/create/#{@@user}:#{@@password}@#{@@ar_server}", data, headers)
+        response, data = http.post(URI.escape("/klink/create/#{@@user}:#{@@password}@#{@@ar_server}"), data, headers)
       else
-        response, data = http.post("/klink/update/#{@@user}:#{@@password}@#{@@ar_server}", data, headers)
+        response, data = http.post(URI.escape("/klink/update/#{@@user}:#{@@password}@#{@@ar_server}"), data, headers)
       end
 
       xmldoc = Document.new data
