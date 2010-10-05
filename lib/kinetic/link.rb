@@ -1,3 +1,8 @@
+# = Introduction
+# The Klink Ruby API is a Ruby wrapper library to be used with a Klink web server.  It provides a simple, easy to use
+# llbrary of methods to access data and other information from a Remedy server.
+#
+
 require 'net/http'
 require 'uri'
 require 'rexml/document'
@@ -6,7 +11,7 @@ include REXML
 
 
 module Kinetic
-  # Represents a Kinetic Link connection
+  # Represents a connection to a Klink server.
   class Link
 
     Kinetic::Link::VERSION = '1.0.5'
@@ -138,11 +143,16 @@ module Kinetic
 
     end
     
-    # return id(s) of records from the form
-    # need to take params 
-    # - sort order
-    # - field id(s) -- which will be field names
-    # - etc -- from Klink list of options
+    # Finds the entry on the form identified by the request_id parameter.  If the fields parameter is specified,
+    # only those fields will be retrieved from the form.  There can be a noticeable performance gain when 
+    # retrieving only a subset of fields from large forms.
+    #
+    # - form_name - the name of the form to retrieve records from
+    # - request_id - the value of the Request ID field for the record to be retrieved
+    # - fields - an optional list (Array, or comma-separated String) of field ids to retrieve (default is all fields)
+    #
+    # Returns a hash that represents the record.  The hash contains a mapping of fields id to field value for each field specified.
+    #
     def self.entry(form_name, request_id, fields = nil)
       self.establish_connection if @@connected == false
 
@@ -168,15 +178,17 @@ module Kinetic
 
     end    
     
-    # TODO - add ability to specify fields to retrieve
-    # improves performance
-    # Possibly new method entries_with_fields???
-    # TODO - same with entry_with_fields
-    # return id(s) of records from the form
-    # need to take params 
-    # - sort order
-    # - field id(s) -- which will be field names
-    # - etc -- from Klink list of options
+    # Finds all the records from a form that match the qualification.  If only a subset of fields on the form
+    # should be returned, please see the entries_with_fields method.
+    #
+    # - form_name - the name of the form to retrieve records from
+    # - qual - an optional qualification used to select the records: i.e.  "1=1"
+    # - sort - an optional list (Array, or comma-separated String) of field ids to sort the results
+    #--
+    # TODO:  Add sort order (ASC | DESC)
+    #++
+    # Returns an array of Request IDs of the records on the form that match the qualification, sorted in the order specified with the sort parameter.
+    #
     def self.entries(form_name, qual = nil, sort = nil)
       self.establish_connection if @@connected == false
 
@@ -203,16 +215,22 @@ module Kinetic
 
     end
     
-    # method: entries_with_fields
-    # parameter form_name The name of the form to query
-    # parameter options A hash of options to use with the query
-    # Available options:
-    #     :qual The qualification string used to limit results
-    #     :sort A comma separated string of field ids, or an array of field id strings used to sort the results
-    #     :fields A comma separated string of field ids, or an array of field id strings of the fields that should be returned with the results.  Field '1' is always returned,
-    #               so this field does not need to be included.
+    # Finds all the records from a form that match the qualification.  If the fields option is specified, only those fields will be retrieved from the form.
+    # There can be a noticeable performance gain when retrieving only a subset of fields from large forms. If any of the specified fields is a diary 
+    # field, or a long character field that cannot be returned with ARGetList, the call will silently fall back to retrieving a list of entry ids, 
+    # then retrieving each entry separately.
     #
-    # returns An array of hashses.  Each entry is a hash of field ids to field values
+    # - form_name - the name of the form to retrieve records from
+    # - options - an optional hash of additional parameters to use with the query
+    #
+    # Available Options
+    # - :qual - an optional qualification used to select the records: i.e.  "1=1"
+    # - :sort - an optional list (Array, or comma-separated String) of field ids to sort the results
+    # - :fields - an optional list (Array, or comma-separated String) of field ids to retrieve (default is all fields)
+    #--
+    # TODO:  Add sort order (ASC | DESC)
+    #++
+    # Returns an array of hashes that represent each record that matched the qualification.  Each hash in the array contains a mapping of fields id to field value.
     #
     def self.entries_with_fields(form_name, options = {})
       self.establish_connection if @@connected == false

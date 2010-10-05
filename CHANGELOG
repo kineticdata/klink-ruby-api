@@ -1,2 +1,13 @@
-Kinetic Link Ruby API v1.0.2 (2010-03-19)
+Klink Ruby API v1.0.2 (2010-03-19)
 * Initial load.
+
+
+Klink Ruby API v1.0.5 (2010-10-05)
+* Added method 'entries_with_fields'
+    * Accepts a list of field ids to return with each entry either as an array, or as a comma-separated string
+    * Returns an array of hashes, one hash for each entry
+* Modified method 'entry'
+    * Now accepts an array of field ids to return with the entry as well as a comma-separated string
+* Modified method 'entries'
+    * Changed the parameter params={} to qual=nil, as this parameter was used as the Remedy form qualification
+    * Mofified the sort fields to accept an array of field ids as well as a comma-separated string

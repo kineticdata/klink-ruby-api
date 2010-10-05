@@ -5,7 +5,7 @@ require 'rake/testtask'
 require 'lib/kinetic/link'
 
 Rake::RDocTask.new do |rdoc|
-  files =['README', 'CHANGELOG', 'ROADMAP', 'lib/**/*.rb']
+  files =['README', 'CHANGELOG', 'lib/**/*.rb']
   rdoc.rdoc_files.add(files)
   rdoc.main = "README"
   rdoc.title = "Kinetic Link Ruby API"
