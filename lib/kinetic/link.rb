@@ -14,7 +14,7 @@ module Kinetic
   # Represents a connection to a Klink server.
   class Link
 
-    Kinetic::Link::VERSION = '1.0.5'
+    Kinetic::Link::VERSION = '1.0.6'
 
     @@link_api_version = "Kinetic Link #{Kinetic::Link::VERSION}"
 
@@ -226,7 +226,7 @@ module Kinetic
     # Available Options
     # - :qual - an optional qualification used to select the records: i.e.  "1=1"
     # - :sort - an optional list (Array, or comma-separated String) of field ids to sort the results
-    # - :fields - an optional list (Array, or comma-separated String) of field ids to retrieve (default is all fields)
+    # - :fields - an optional list (Array, or comma-separated String) of field ids to retrieve (default is no fields)
     #--
     # TODO:  Add sort order (ASC | DESC)
     #++
@@ -262,8 +262,9 @@ module Kinetic
         
         # check if there are any errors retrieving dialry fields or character fields that are too long
         if xmldoc.root.attributes['Success'] == "false"
-          message = xmldoc.elements["Response/Messages/Message[@MessageNumber='241']"]
-          raise StandardError.new(message.text) if message
+          message = xmldoc.elements["Response/Messages/Message"]
+          message_text = message.text if message
+          raise StandardError.new(message_text || "Fall back to retrieving each record individually")
         end
 
         xmldoc.elements.each('Response/Result/EntryList/Entry') { |id| 
