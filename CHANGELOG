@@ -11,3 +11,7 @@ Klink Ruby API v1.0.5 (2010-10-05)
 * Modified method 'entries'
     * Changed the parameter params={} to qual=nil, as this parameter was used as the Remedy form qualification
     * Mofified the sort fields to accept an array of field ids as well as a comma-separated string
+
+Klink Ruby API v1.0.6 (2010-12-16)
+* Updated entries_with_fields to fall back to retrieving entries individually in the case of any error, 
+  previously it was looking specifically for error number 241.
