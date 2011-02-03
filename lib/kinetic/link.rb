@@ -43,7 +43,7 @@ module Kinetic
     end
 
     # setup connection info
-    # Example: Demo,"","klinkserver:8081.yourcompany.com,remedy.yourcompany.com
+    # Example: "SampleUser","Sample Password","klinkserver:8081.yourcompany.com","remedy.yourcompany.com"
     # TODO -- add AR Server port??? -- how does that work with Klink?
     def self.set_connection(user,password,klink_server,ar_server)
       @@user = user
