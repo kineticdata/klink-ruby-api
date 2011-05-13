@@ -146,26 +146,34 @@ module Kinetic
 
     end
     
-    # Finds the entry on the form identified by the request_id parameter.  If the fields parameter is specified,
-    # only those fields will be retrieved from the form.  There can be a noticeable performance gain when 
-    # retrieving only a subset of fields from large forms.
+    # Finds the entry on the form identified by the request_id parameter.  If the
+    # fields parameter is specified, only those fields will be retrieved from the
+    # form.  There can be a noticeable performance gain when retrieving only a subset
+    # of fields from large forms.
     #
     # - form_name - the name of the form to retrieve records from
     # - request_id - the value of the Request ID field for the record to be retrieved
-    # - fields - an optional list (Array, or comma-separated String) of field ids to retrieve (default is all fields)
+    # - fields - an optional list (Array, or comma-separated String) of field ids
+    #            to retrieve (default is all fields)
     #
-    # Returns a hash that represents the record.  The hash contains a mapping of fields id to field value for each field specified.
+    # Returns a hash that represents the record.  The hash contains a mapping of
+    # fields id to field value for each field specified.
     #
     def self.entry(form_name, request_id, fields = nil)
       self.establish_connection if @@connected == false
+
+      form_name_escaped = URI.escape(form_name).gsub("&", "%26")
+      request_id_escaped = URI.escape(request_id).gsub("&", "%26")
 
       # build up the string of field ids to return
       fields ||= ''
       fields = fields.join(",") if fields.is_a? Array
       fields.gsub!(' ', '')
-      field_list = "?items=#{fields}" unless fields.nil? || fields.empty?
+      fields_escaped = URI.escape(fields).gsub("&", "%26")
+      field_list = "?items=#{fields_escaped}" unless fields_escaped.empty?
       
-      uri = URI.escape("http://#{@@klink_server}/klink/entry/#{@@user}:#{@@password}@#{@@ar_server}/#{form_name}/#{request_id}#{field_list}")
+      uri = "http://#{@@klink_server}/klink/entry/#{@@user}:#{@@password}@#{@@ar_server}/" <<
+        "#{form_name_escaped}/#{request_id_escaped}#{field_list}"
 
       response = Net::HTTP.get(URI.parse(uri))
       xmldoc = Document.new(response)
