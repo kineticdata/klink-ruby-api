@@ -234,22 +234,28 @@ module Kinetic
 
     end
     
-    # Finds all the records from a form that match the qualification.  If the fields option is specified, only those fields will be retrieved from the form.
-    # There can be a noticeable performance gain when retrieving only a subset of fields from large forms. If any of the specified fields is a diary 
-    # field, or a long character field that cannot be returned with ARGetList, the call will silently fall back to retrieving a list of entry ids, 
-    # then retrieving each entry separately.
+    # Finds all the records from a form that match the qualification.  If the fields
+    # option is specified, only those fields will be retrieved from the form.
+    # There can be a noticeable performance gain when retrieving only a subset of
+    # fields from large forms. If any of the specified fields is a diary field,
+    # or a long character field that cannot be returned with ARGetList, the call
+    # will silently fall back to retrieving a list of entry ids, then retrieving
+    # each entry separately.
     #
     # - form_name - the name of the form to retrieve records from
     # - options - an optional hash of additional parameters to use with the query
     #
     # Available Options
     # - :qual - an optional qualification used to select the records: i.e.  "1=1"
-    # - :sort - an optional list (Array, or comma-separated String) of field ids to sort the results
-    # - :fields - an optional list (Array, or comma-separated String) of field ids to retrieve (default is no fields)
+    # - :sort - an optional list (Array, or comma-separated String) of field ids
+    #           to sort the results
+    # - :fields - an optional list (Array, or comma-separated String) of field ids
+    #             to retrieve (default is no fields)
     #--
     # TODO:  Add sort order (ASC | DESC)
     #++
-    # Returns an array of hashes that represent each record that matched the qualification.  Each hash in the array contains a mapping of fields id to field value.
+    # Returns an array of hashes that represent each record that matched the qualification.
+    # Each hash in the array contains a mapping of fields id to field value.
     #
     def self.entries_with_fields(form_name, options = {})
       self.establish_connection if @@connected == false
