@@ -260,23 +260,29 @@ module Kinetic
     def self.entries_with_fields(form_name, options = {})
       self.establish_connection if @@connected == false
       
+      form_name_escaped = URI.escape(form_name).gsub("&", "%26")
+
       # build up the qualification as the first parameter - not necessary as the first, but we need to include the ? somewhere.
       qual = options[:qual] || ''
-      qualification = "?qualification=#{qual}"
+      qual_escaped = URI.escape(qual).gsub("&", "%26")
+      qualification = "?qualification=#{qual_escaped}"
       
       # build up the string of sort fields
       sort = options[:sort] || ''
-      sort = options.join(",") if sort.is_a? Array
+      sort = sort.join(",") if sort.is_a? Array
       sort.gsub!(' ', '')
-      sort_list = "&sort=#{sort}" unless sort.nil? || sort.empty?
+      sort_escaped = URI.escape(sort).gsub("&", "%26")
+      sort_list = "&sort=#{sort_escaped}" unless sort_escaped.empty?
       
       # build up the string of field ids to return
       fields = options[:fields] || ''
       fields = fields.join(",") if fields.is_a? Array
       fields.gsub!(' ', '')
-      field_list = "&items=#{fields}" unless fields.nil? || fields.empty?
+      fields_escaped = URI.escape(fields).gsub("&", "%26")
+      field_list = "&items=#{fields_escaped}" unless fields_escaped.empty?
       
-      uri = URI.escape("http://#{@@klink_server}/klink/entries/#{@@user}:#{@@password}@#{@@ar_server}/#{form_name}#{qualification}#{sort_list}#{field_list}")
+      uri = "http://#{@@klink_server}/klink/entries/#{@@user}:#{@@password}@#{@@ar_server}/" <<
+        "#{form_name_escaped}#{qualification}#{sort_list}#{field_list}"
 
       ret_val = Array.new
       
