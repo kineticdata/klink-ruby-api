@@ -189,29 +189,37 @@ module Kinetic
 
     end    
     
-    # Finds all the records from a form that match the qualification.  If only a subset of fields on the form
-    # should be returned, please see the entries_with_fields method.
+    # Finds all the records from a form that match the qualification.  If only a
+    # subset of fields on the form should be returned, please see the
+    # entries_with_fields method.
     #
     # - form_name - the name of the form to retrieve records from
     # - qual - an optional qualification used to select the records: i.e.  "1=1"
-    # - sort - an optional list (Array, or comma-separated String) of field ids to sort the results
+    # - sort - an optional list (Array, or comma-separated String) of field ids
+    #          to sort the results
     #--
     # TODO:  Add sort order (ASC | DESC)
     #++
-    # Returns an array of Request IDs of the records on the form that match the qualification, sorted in the order specified with the sort parameter.
+    # Returns an array of Request IDs of the records on the form that match the
+    # qualification, sorted in the order specified with the sort parameter.
     #
     def self.entries(form_name, qual = nil, sort = nil)
       self.establish_connection if @@connected == false
 
+      form_name_escaped = URI.escape(form_name).gsub("&", "%26")
+
       qual ||= ''
-      qualification = "?qualification=#{qual}"
+      qual_escaped = URI.escape(qual).gsub("&", "%26")
+      qualification = "?qualification=#{qual_escaped}"
       
       sort ||= ''
-      sort = options.join(",") if sort.is_a? Array
+      sort = sort.join(",") if sort.is_a? Array
       sort.gsub!(' ', '')
-      sort_list = "&sort=#{sort}" unless sort.nil? || sort.empty?
+      sort_escaped = URI.escape(sort).gsub("&", "%26")
+      sort_list = "&sort=#{sort_escaped}" unless sort_escaped.empty?
       
-      uri = URI.escape("http://#{@@klink_server}/klink/entries/#{@@user}:#{@@password}@#{@@ar_server}/#{form_name}#{qualification}#{sort_list}")
+      uri = "http://#{@@klink_server}/klink/entries/#{@@user}:#{@@password}@#{@@ar_server}/" <<
+        "#{form_name_escaped}#{qualification}#{sort_list}"
 
       response = Net::HTTP.get(URI.parse(uri))
       xmldoc = Document.new(response)
