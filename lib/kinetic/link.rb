@@ -14,7 +14,7 @@ module Kinetic
   # Represents a connection to a Klink server.
   class Link
 
-    Kinetic::Link::VERSION = '1.0.6'
+    Kinetic::Link::VERSION = '1.0.7 DEV'
 
     @@link_api_version = "Kinetic Link #{Kinetic::Link::VERSION}"
 
@@ -117,7 +117,10 @@ module Kinetic
     def self.delete(form_name, request_id)
       self.establish_connection if @@connected == false
       
-      uri = URI.escape("http://#{@@klink_server}/klink/delete/#{@@user}:#{@@password}@#{@@ar_server}/#{form_name}/#{request_id}")
+      form_name_escaped = URI.escape(form_name).gsub("&", "%26")
+      request_id_escaped = URI.escape(request_id).gsub("&", "%26")
+      uri = "http://#{@@klink_server}/klink/delete/#{@@user}:#{@@password}@#{@@ar_server}/" <<
+        "#{form_name_escaped}/#{request_id_escaped}"
 
       response = Net::HTTP.get(URI.parse(uri))
       xmldoc = Document.new response
