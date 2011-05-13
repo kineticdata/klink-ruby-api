@@ -15,3 +15,7 @@ Klink Ruby API v1.0.5 (2010-10-05)
 Klink Ruby API v1.0.6 (2010-12-16)
 * Updated entries_with_fields to fall back to retrieving entries individually in the case of any error, 
   previously it was looking specifically for error number 241.
+
+Klink Ruby API v1.0.7 (2011-05-13)
+* Modified entry, entries, entries_with_fields, and delete methods to escape parameters
+  before building the entire URI string, and also modified them to escape ampersands.

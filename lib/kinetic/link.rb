@@ -14,7 +14,7 @@ module Kinetic
   # Represents a connection to a Klink server.
   class Link
 
-    Kinetic::Link::VERSION = '1.0.7 DEV'
+    Kinetic::Link::VERSION = '1.0.7'
 
     @@link_api_version = "Kinetic Link #{Kinetic::Link::VERSION}"
 
